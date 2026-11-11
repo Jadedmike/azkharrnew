@@ -15,6 +15,8 @@ import 'package:hijri/hijri_calendar.dart';
 import 'favorites_page.dart';
 import 'global_search_page.dart';
 import 'tasbeeh_page.dart';
+import '../../../prayer/presentation/pages/prayer_times_page.dart';
+import '../../../qibla/presentation/pages/qibla_page.dart';
 
 /// The Home Screen of the Adhkar ("ذكر") application.
 /// Preserving top header, greeting, daily quote cards, background, and bottom navigation.
@@ -287,6 +289,16 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
 
                             // Single Centered Tasbeeh Card (75% Screen Width)
                             _buildTasbeehCard(context),
+
+                            const SizedBox(height: 16),
+
+                            // Prayer Times Entry
+                            _buildPrayerTimesCard(context),
+
+                            const SizedBox(height: 16),
+
+                            // Qibla Compass Entry
+                            _buildQiblaCard(context),
                           ],
                         ),
                       ),
@@ -785,6 +797,131 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
                 style: TextStyle(
                   fontFamily: 'Fustat',
                   fontSize: 14,
+                  fontWeight: FontWeight.bold,
+                  color: isDark
+                      ? const Color(0xFFF6F1E7)
+                      : const Color(0xFF1E281F),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  /// Centered Circular Prayer Times Button
+  Widget _buildPrayerTimesCard(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    return Center(
+      child: AnimatedCardTap(
+        onTap: () {
+          Navigator.of(
+            context,
+          ).push(AppPageRoute.create(const PrayerTimesPage()));
+        },
+        child: Container(
+          width: 120,
+          height: 120,
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            color: isDark ? const Color(0xFF262D24) : const Color(0xFFFFFDF9),
+            border: Border.all(
+              color: isDark
+                  ? const Color(0xFFC9A15B).withValues(alpha: 0.6)
+                  : const Color(0xFFC5A059).withValues(alpha: 0.6),
+              width: 2.0,
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: isDark
+                    ? const Color(0x30000000)
+                    : const Color(0x12000000),
+                blurRadius: 16,
+                offset: const Offset(0, 6),
+              ),
+            ],
+          ),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(
+                Icons.mosque_outlined,
+                size: 34,
+                color: isDark
+                    ? const Color(0xFFC9A15B)
+                    : const Color(0xFF4E5B4E),
+              ),
+              const SizedBox(height: 6),
+              Text(
+                'مواقيت الصلاة',
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontFamily: 'Fustat',
+                  fontSize: 13.5,
+                  fontWeight: FontWeight.bold,
+                  color: isDark
+                      ? const Color(0xFFF6F1E7)
+                      : const Color(0xFF1E281F),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  /// Centered Circular Qibla Compass Button
+  Widget _buildQiblaCard(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    return Center(
+      child: AnimatedCardTap(
+        key: const Key('home_qibla_button'),
+        onTap: () {
+          Navigator.of(context).push(AppPageRoute.create(const QiblaPage()));
+        },
+        child: Container(
+          width: 120,
+          height: 120,
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            color: isDark ? const Color(0xFF262D24) : const Color(0xFFFFFDF9),
+            border: Border.all(
+              color: isDark
+                  ? const Color(0xFFC9A15B).withValues(alpha: 0.6)
+                  : const Color(0xFFC5A059).withValues(alpha: 0.6),
+              width: 2.0,
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: isDark
+                    ? const Color(0x30000000)
+                    : const Color(0x12000000),
+                blurRadius: 16,
+                offset: const Offset(0, 6),
+              ),
+            ],
+          ),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(
+                Icons.explore_outlined,
+                size: 34,
+                color: isDark
+                    ? const Color(0xFFC9A15B)
+                    : const Color(0xFF4E5B4E),
+              ),
+              const SizedBox(height: 6),
+              Text(
+                'اتجاه القبلة',
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontFamily: 'Fustat',
+                  fontSize: 13.5,
                   fontWeight: FontWeight.bold,
                   color: isDark
                       ? const Color(0xFFF6F1E7)

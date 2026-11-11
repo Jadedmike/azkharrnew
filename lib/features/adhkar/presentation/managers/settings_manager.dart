@@ -162,7 +162,7 @@ class SettingsManager {
       morningReminder.value = false;
       eveningReminder.value = false;
       dailyReminder.value = false;
-      await NotificationService.cancelAll();
+      await NotificationService.cancelAdhkarNotifications();
     } else {
       await NotificationService.syncSchedulesWithOsState();
     }

@@ -27,6 +27,20 @@ class NotificationService {
   static const int _idTestImmediate = 9999;
   static const List<int> _idRandomDhikrs = [2001, 2002, 2003];
 
+  /// All scheduled Adhkar notification IDs owned by [NotificationService].
+  static const List<int> adhkarNotificationIds = <int>[
+    _idMorning,
+    _idEvening,
+    2001,
+    2002,
+    2003,
+  ];
+
+  @visibleForTesting
+  static void resetForTesting() {
+    _isInitialized = false;
+  }
+
   // Channel IDs & Configurations
   static const String _channelIdReminders = 'athkar_reminders_channel';
   static const String _channelNameReminders = 'تنبيهات الأذكار اليومية';
@@ -123,7 +137,8 @@ class NotificationService {
     } catch (_) {}
   }
 
-  /// Check if the OS notification permission is currently granted.
+  /// Check if the OS notification permission is currently granted without
+  /// triggering a permission prompt.
   static Future<bool> isPermissionGranted() async {
     try {
       final androidImpl = _notificationsPlugin
@@ -140,12 +155,11 @@ class NotificationService {
             IOSFlutterLocalNotificationsPlugin
           >();
       if (iosImpl != null) {
-        final bool? granted = await iosImpl.requestPermissions(
-          alert: true,
-          badge: true,
-          sound: true,
-        );
-        return granted ?? false;
+        final NotificationsEnabledOptions? options =
+            await iosImpl.checkPermissions();
+        return (options?.isEnabled ?? false) ||
+            (options?.isAlertEnabled ?? false) ||
+            (options?.isProvisionalEnabled ?? false);
       }
     } catch (_) {}
 
@@ -202,12 +216,31 @@ class NotificationService {
     await requestExactAlarmsPermission();
   }
 
-  /// Determine the appropriate scheduling mode dynamically.
-  /// Uses [AndroidScheduleMode.exactAllowWhileIdle] as primary mode,
-  /// or falls back safely to [AndroidScheduleMode.inexactAllowWhileIdle].
+  /// Read-only check for whether exact alarm scheduling is currently
+  /// permitted on Android 12+ without launching OS settings screens.
+  static Future<bool> canScheduleExactNotifications() async {
+    try {
+      final androidImpl = _notificationsPlugin
+          .resolvePlatformSpecificImplementation<
+            AndroidFlutterLocalNotificationsPlugin
+          >();
+      if (androidImpl != null) {
+        final bool? canExact = await androidImpl.canScheduleExactNotifications();
+        return canExact ?? false;
+      }
+    } catch (_) {}
+    return true;
+  }
+
+  /// Determine the appropriate scheduling mode dynamically using a read-only
+  /// exact-alarm capability check.
+  ///
+  /// Uses [AndroidScheduleMode.exactAllowWhileIdle] when permitted, or falls
+  /// back safely to [AndroidScheduleMode.inexactAllowWhileIdle] without
+  /// launching system settings screens.
   static Future<AndroidScheduleMode> _determineScheduleMode() async {
     try {
-      final bool canExact = await requestExactAlarmsPermission();
+      final bool canExact = await canScheduleExactNotifications();
       if (canExact) {
         return AndroidScheduleMode.exactAllowWhileIdle;
       }
@@ -220,7 +253,7 @@ class NotificationService {
     final bool hasPermission = await isPermissionGranted();
 
     if (!hasPermission) {
-      await cancelAll();
+      await cancelAdhkarNotifications();
       return;
     }
 
@@ -471,12 +504,22 @@ class NotificationService {
     } catch (_) {}
   }
 
-  /// Cancel All App Scheduled Notifications
-  static Future<void> cancelAll() async {
-    try {
-      await _notificationsPlugin.cancelAll();
-    } catch (_) {}
+  /// Cancel only Adhkar scheduled notification IDs (`1001`, `1002`, `2001`,
+  /// `2002`, `2003`) without disturbing notifications owned by other features.
+  static Future<void> cancelAdhkarNotifications() async {
+    for (final id in adhkarNotificationIds) {
+      try {
+        await _notificationsPlugin.cancel(id);
+      } catch (_) {}
+    }
   }
+
+  /// Cancel all Adhkar notifications owned by this service.
+  ///
+  /// Targets only [adhkarNotificationIds] rather than calling plugin-wide
+  /// `cancelAll()` so notifications owned by other features (such as prayer
+  /// notifications) are never deleted.
+  static Future<void> cancelAll() => cancelAdhkarNotifications();
 
   /// Load valid Dhikr texts from existing JSON assets only.
   static Future<List<String>> _loadValidDhikrsFromAssets() async {
